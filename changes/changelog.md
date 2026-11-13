@@ -18,4 +18,6 @@ Categories: SNAPSHOT, INVESTIGATE, REMEDIATE, HARDEN, CONFIG, USER, SERVICE, FIR
 
 21:33 UTC | opensuse | [VERIFY] Ran `smbclient -L localhost -N` — shares still visible | post-samba-change verify | PASS
 
+2026-11-13 ~21:50 UTC | opensuse | [REMEDIATE] Removed /srv/samba/data/rootfs symlink + hardened smb.conf | F007 | shares still accessible, SMB2 only
+
 ---
