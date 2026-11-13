@@ -29,5 +29,12 @@ sudo cat /root/.cfc-baseline/payloads/10-cache
 5. **Verify sudoers still valid:** `sudo visudo -c`
 6. **Verify:** `sudo cat /etc/sudoers.d/` contents
 
+Contents: `wwwrun ALL=(root) NOPASSWD: /usr/bin/tar`
+
+Exploit: wwwrun (Apache user) can run tar as root with no password.
+tar has multiple root-escalation vectors:
+  sudo tar -cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/bash
+Combined with any of the 3 webshells (F006) = instant root via HTTP.
+
 ## Remediation Actions Taken
 - [ ] Not yet started
