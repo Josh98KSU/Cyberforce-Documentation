@@ -29,5 +29,9 @@ Additionally:
 1. Change blueteam's password (if password auth is enabled)
 2. Consider generating a new SSH key pair for yourself and replacing any legit authorized_keys
 
+Key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFMzOvmY3c5jNd0Rt6OzcAeJqgyb8jqwxnnw8kEiXIH7 cfc-redteam
+Comment literally says "cfc-redteam" — no ambiguity about intent.
+Grants Red Team SSH as blueteam → NOPASSWD sudo → root.
+
 ## Remediation Actions Taken
 - [ ] Not yet started
