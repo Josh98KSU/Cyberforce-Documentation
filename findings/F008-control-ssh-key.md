@@ -29,6 +29,12 @@ Also: there's a second key `ssh-ed25519 ... root@ip-10-0-32-83` in root's author
 3. Check /root/.ssh/authorized_keys2 contents — this is a VERY suspicious legacy location
 4. Monitor auth logs for who connects with this key
 
+/root/.ssh/authorized_keys2 contents:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPcNkZyTACb/dQmA8JxTcJVZqckOZK1iE9+v6JGjcUYE vault
+
+authorized_keys2 is a deprecated OpenSSH location but still honored by default
+in sshd on many distros. Direct root SSH access for Red Team.
+
 ## Remediation Plan
 - Do NOT remove root's `authorized_keys` Control key (safer — it has a forced command restriction anyway)
 - **DO remove `/root/.ssh/authorized_keys2`** (legacy location, often malicious use)
