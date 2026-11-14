@@ -1,26 +1,27 @@
-# F012 — Rogue systemd unit launching fake json_pp
+# F012 — Rogue systemd Unit Launching Fake json_pp
 
-- **ID:** F012
-- **Severity:** CRITICAL
-- **VM:** opensuse (Task Server)
-- **Discovered:** 2026-11-13
-- **Status:** INVESTIGATE
+**Discovered:** 2026-11-13 ~21:10 UTC
+**VM:** opensuse-task (10.0.172.145)
+**Severity:** CRITICAL
+**Status:** ✅ RESOLVED
+**Related:** F004 (the imposter binary this launched — resolved)
 
 ## Summary
-`/etc/systemd/system/network-bridge.service` is the launcher that starts
+`/etc/systemd/system/network-bridge.service` was the launcher that started
 `/bin/json_pp-3.13` (the fake binary from F004) at boot as root.
 
 ## Evidence
-grep match: /etc/systemd/system/network-bridge.service:7:ExecStart=/bin/json_pp-3.13
+grep match: `/etc/systemd/system/network-bridge.service:7:ExecStart=/bin/json_pp-3.13`
 
-Named "network-bridge" to look legitimate.
+Named "network-bridge" to look legitimate — there is no such thing as a system network-bridge unit by default on OpenSUSE.
 
 ## Impact
-Root-level persistence on every boot. F004 process respawns automatically
-unless this unit is disabled and masked.
+Root-level persistence on every boot. F004 process respawned automatically on reboot. No actual network bridge functionality.
 
-## Related
-F004 (the binary this launches)
-
-## Remediation
-Part of consolidated kill order (pending).
+## Remediation Actions Taken
+- 2026-11-13 ~23:42: Stopped service: `sudo systemctl stop network-bridge.service`
+- 2026-11-13 ~23:42: Disabled service: `sudo systemctl disable network-bridge.service`
+- 2026-11-13 ~23:42: Removed unit file: `sudo rm /etc/systemd/system/network-bridge.service`
+- 2026-11-13 ~23:42: Reloaded systemd: `sudo systemctl daemon-reload`
+- 2026-11-13 ~23:43: Verified no other systemd units reference json_pp or similar imposters
+- 2026-11-13 ~23:43: Verified no other `.service` files owned by non-root user

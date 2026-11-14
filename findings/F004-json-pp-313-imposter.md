@@ -3,7 +3,8 @@
 **Discovered:** 2026-11-13 ~21:00 UTC
 **VM:** opensuse-task (10.0.172.145)
 **Severity:** CRITICAL
-**Status:** INVESTIGATE
+**Status:** ✅ RESOLVED
+**Related:** F012 (network-bridge.service was the launcher)
 
 ## What It Is
 Fake binary at `/bin/json_pp-3.13`:
@@ -19,28 +20,13 @@ Real `/bin/json_pp` also exists (4992 bytes, root:root) — legitimate.
 - Owned by non-root user but running as root = someone put it there via a privilege escalation
 - Version "3.13" is not a json_pp version number (it's suspiciously similar to Python 3.13)
 - Running continuously with child processes — json_pp is a one-shot JSON formatter
-
-## Open Questions
-- What does it actually do? (C2 beacon? Keylogger? Another listener?)
-- What systemd unit or script launches it?
-- Where does /bin/json_pp-3.13 get re-copied from if we delete it?
-
-## Investigation TODO
-```
-sudo strings /bin/json_pp-3.13 | head -100
-sudo ls -la /proc/926/cwd
-sudo cat /proc/926/environ | tr '\0' '\n'
-sudo ss -tnp | grep 926
-sudo lsof -p 926 2>/dev/null
-sudo grep -rE 'json_pp' /etc/systemd/ /usr/lib/systemd/ /root/.cfc-baseline/ 2>/dev/null
-```
-
-## Remediation Plan
-1. Investigate parent / launcher
-2. Capture binary for evidence: `sudo cp /bin/json_pp-3.13 /root/ir-evidence-json_pp-3.13.bin`
-3. Kill PIDs: `sudo kill -9 926 934`
-4. Remove binary: `sudo rm /bin/json_pp-3.13`
-5. Monitor for respawn
+- Code analysis revealed: ptrace-attaches to passwd processes, netlink proc event listener, logged stolen credentials to `/home/blueteam/test.txt`
 
 ## Remediation Actions Taken
-- [ ] Not yet started
+- 2026-11-13 ~23:42: Captured binary for evidence: `sudo cp /bin/json_pp-3.13 /root/ir-evidence-json_pp-3.13.bin`
+- 2026-11-13 ~23:42: Killed PIDs: `sudo kill -9 926 934`
+- 2026-11-13 ~23:42: Disabled launcher (F012): `sudo systemctl disable --now network-bridge.service`
+- 2026-11-13 ~23:42: Removed binary: `sudo rm /bin/json_pp-3.13`
+- 2026-11-13 ~23:43: Removed credential log: `sudo rm /home/blueteam/test.txt`
+- 2026-11-13 ~23:43: Verified real json_pp still works: `json_pp --version`
+- 2026-11-13 ~23:43: Monitored for respawn — none (F012 was the only launcher)

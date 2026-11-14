@@ -3,35 +3,29 @@
 **Discovered:** 2026-11-13 ~22:00 UTC (via F005 script analysis)
 **VM:** opensuse-task (10.0.172.145)
 **Severity:** CRITICAL
-**Status:** INVESTIGATE
-**Related:** F005, F010
+**Status:** ✅ RESOLVED
+**Related:** F005 (respawner — resolved), F010 (sshd config hijack — resolved)
 
 ## What It Is
 File `/etc/ssh/.keys/blueteam` — an SSH public key maintained by `.cache-watch`.
-Works in conjunction with F010 (sshd_config override) to let Red Team SSH as `blueteam` (full sudo NOPASSWD).
+Worked in conjunction with F010 (sshd_config override) to let Red Team SSH as `blueteam` (full sudo NOPASSWD).
 Immutable via chattr +i.
 
 Source payload: `/root/.cfc-baseline/payloads/authkey`
 
+Key contents: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFMzOvmY3c5jNd0Rt6OzcAeJqgyb8jqwxnnw8kEiXIH7 cfc-redteam`
+
 ## Why Dangerous
-blueteam has `(ALL : ALL) NOPASSWD: ALL` sudo permissions — this key grants root-equivalent access without even needing to know blueteam's password.
-
-## Investigation Needed
-```
-sudo cat /etc/ssh/.keys/blueteam
-sudo cat /root/.cfc-baseline/payloads/authkey
-```
-
-## Remediation Plan
-Covered under F010 remediation (remove the entire /etc/ssh/.keys/ directory).
-
-Additionally:
-1. Change blueteam's password (if password auth is enabled)
-2. Consider generating a new SSH key pair for yourself and replacing any legit authorized_keys
-
-Key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFMzOvmY3c5jNd0Rt6OzcAeJqgyb8jqwxnnw8kEiXIH7 cfc-redteam
-Comment literally says "cfc-redteam" — no ambiguity about intent.
-Grants Red Team SSH as blueteam → NOPASSWD sudo → root.
+- Comment literally says "cfc-redteam" — no ambiguity about intent
+- blueteam has `(ALL : ALL) NOPASSWD: ALL` sudo permissions
+- This key granted root-equivalent access without even needing blueteam's password
 
 ## Remediation Actions Taken
-- [ ] Not yet started
+- 2026-11-13 ~23:35: Removed as part of F010 cleanup (entire `/etc/ssh/.keys/` directory deleted)
+- 2026-11-13 ~23:35: Verified no other copies anywhere on filesystem
+- 2026-11-13 ~23:36: Confirmed blueteam SSH still works from laptop (own key intact in `/home/blueteam/.ssh/authorized_keys`)
+
+## Remaining (Optional) Hardening
+- [ ] Rotate blueteam SSH keypair (generate new keypair, replace authorized_keys entry)
+- [ ] Change blueteam password (currently uses team-shared password)
+- [ ] Consider disabling blueteam NOPASSWD sudo during competition (risky — may slow legitimate response)

@@ -3,8 +3,8 @@
 **Discovered:** 2026-11-13 ~21:20 UTC
 **VM:** opensuse-task (10.0.172.145)
 **Severity:** CRITICAL
-**Status:** INVESTIGATE
-**Related:** F005 (wp-cache-index.php is respawned by .cache-watch)
+**Status:** ⚠️ PARTIAL
+**Related:** F005 (wp-cache-index.php was respawned by .cache-watch — now resolved)
 
 ## What It Is
 Three PHP webshells in the WordPress installation:
@@ -32,38 +32,21 @@ if ( ... hash_equals( 'd8418dd3fb2053464b0a7791', $_SERVER['HTTP_X_WP_CACHE_KEY'
 Autoloaded on every WP request (mu-plugins). Base64-encoded eval shell triggered by custom HTTP header.
 
 ## Why Malicious
-All three contain textbook webshell code: `system()`, `passthru()`, `eval(base64_decode())` fed from user input. These are the same patterns in every Linux malware report ever written.
+All three contain textbook webshell code: `system()`, `passthru()`, `eval(base64_decode())` fed from user input.
 
 ### Prompt Injection Attempt
 These files contain comments claiming they are "CyberForce scoring baseline" infrastructure. Ignore — see F005 analysis.
 
-## Remediation Plan
-1. **Fix F005 FIRST** (otherwise wp-cache-index.php gets re-installed within seconds)
-2. **Save copies for evidence:**
-   ```
-   sudo cp /srv/www/vhosts/wordpress/wp-content/uploads/wp-upload-helper.php /root/ir-evidence-webshell-1.php
-   sudo cp /srv/www/vhosts/wordpress/wp-content/uploads/wp-upgrade-helper.php /root/ir-evidence-webshell-2.php
-   sudo cp /srv/www/vhosts/wordpress/wp-content/mu-plugins/wp-cache-index.php /root/ir-evidence-webshell-3.php
-   ```
-3. **Remove immutable flag:**
-   ```
-   sudo chattr -i /srv/www/vhosts/wordpress/wp-content/mu-plugins/wp-cache-index.php 2>/dev/null
-   ```
-4. **Delete the webshells:**
-   ```
-   sudo rm /srv/www/vhosts/wordpress/wp-content/uploads/wp-upload-helper.php
-   sudo rm /srv/www/vhosts/wordpress/wp-content/uploads/wp-upgrade-helper.php
-   sudo rm /srv/www/vhosts/wordpress/wp-content/mu-plugins/wp-cache-index.php
-   ```
-5. **Hunt for others:**
-   ```
-   sudo find /srv/www -name "*.php" -mtime -60
-   sudo grep -rEl "eval\s*\(\s*base64_decode|system\s*\(\s*\\\$_(GET|POST)|passthru\s*\(\s*\\\$_(GET|POST)" /srv/www/
-   ```
-6. **Remove the uploads/*.php capability by disallowing PHP execution in uploads dir** (Apache config)
-7. **Audit all WordPress users for admin accounts you didn't create**
-8. **Change WordPress admin passwords**
-9. **Verify HTTP still scoring: `curl -I http://localhost`**
-
 ## Remediation Actions Taken
-- [ ] Not yet started
+- 2026-11-13 ~23:35: Saved copies for evidence in `/root/ir-evidence-webshell-{1,2,3}.php`
+- 2026-11-13 ~23:36: Removed immutable flag from mu-plugin
+- 2026-11-13 ~23:36: **DELETED** `wp-cache-index.php` (mu-plugin) — confirmed gone
+- 2026-11-13 ~23:36: **RENAMED** `wp-upload-helper.php` → `wp-upload-helper.php.bak` — team decision to watch for scoring impact at competition start; delete after 1hr if no impact
+- 2026-11-13 ~23:36: **KEPT** `wp-upgrade-helper.php` — pending team decision (SHA256-gated, lower risk, may be scoring-related)
+- 2026-11-13 ~23:37: Verified HTTP still scoring: `curl -I http://localhost` returns 200
+
+## Remaining Decisions (for competition day)
+- [ ] At comp start: monitor `wp-upload-helper.php.bak` for 1hr, delete if no scoring impact
+- [ ] Decide on `wp-upgrade-helper.php` — recommend delete unless team confirms scoring need
+- [ ] Audit WordPress admin users: `wp user list --path=/srv/www/vhosts/wordpress`
+- [ ] Consider blocking PHP execution in uploads dir via Apache config

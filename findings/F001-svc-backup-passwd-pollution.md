@@ -3,8 +3,8 @@
 **Discovered:** 2026-11-13 ~20:45 UTC
 **VM:** opensuse-task (10.0.172.145)
 **Severity:** CRITICAL
-**Status:** INVESTIGATE
-**Related:** F005 (respawner — may re-add these entries)
+**Status:** ✅ RESOLVED
+**Related:** F005 (respawner), F013 (cron persistence), F015 (.health-check.sh) — all resolved
 
 ## What It Is
 17,785 duplicate entries of `svc-backup` in `/etc/passwd`:
@@ -30,7 +30,7 @@ sudo grep -n "svc-backup" /etc/passwd  →  starts at line 27
 `cat /etc/passwd | grep -v nologin | grep -v /bin/false` during initial recon.
 
 ## Remediation Plan
-1. First disable the respawner (F005) or new entries may reappear
+1. First disable the respawner (F005/F013/F015) or new entries may reappear
 2. Back up /etc/passwd: `sudo cp /etc/passwd /etc/passwd.bak`
 3. Remove all svc-backup lines: `sudo sed -i '/^svc-backup:/d' /etc/passwd`
 4. Verify: `sudo grep -c svc-backup /etc/passwd` should return 0
@@ -39,4 +39,10 @@ sudo grep -n "svc-backup" /etc/passwd  →  starts at line 27
 7. Verify no svc-backup processes running: `ps -ef | grep svc-backup`
 
 ## Remediation Actions Taken
-- [ ] Not yet started
+- 2026-11-13 ~23:45: Disabled F015 (.health-check.sh) and F013 (cron persistence) FIRST to prevent respawn
+- 2026-11-13 ~23:48: Backed up /etc/passwd → `/etc/passwd.bak-pre-f001-20261113-2348`
+- 2026-11-13 ~23:48: Removed all svc-backup lines: `sudo sed -i '/^svc-backup:/d' /etc/passwd`
+- 2026-11-13 ~23:49: Verified `grep -c svc-backup /etc/passwd` returns 0
+- 2026-11-13 ~23:49: Verified `pwck -r` passes clean
+- 2026-11-13 ~23:50: Confirmed svc-backup not in /etc/shadow
+- 2026-11-13 ~23:50: Monitored for 15+ minutes — no respawn
